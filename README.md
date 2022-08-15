@@ -1,3 +1,6 @@
+[![Crates.io](https://img.shields.io/crates/v/restep?style=for-the-badge)](https://crates.io/crates/restep)
+[![Docs.rs](https://img.shields.io/docsrs/restep?style=for-the-badge)](https://docs.rs/restep)
+
 # restep
 
 
