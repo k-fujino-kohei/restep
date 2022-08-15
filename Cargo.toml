@@ -1,0 +1,27 @@
+[package]
+name = "restep"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kohei Fujino <appleblueberrycherry@gmail.com>"]
+readme = "README.md"
+license-file = "LICENSE"
+description = "Simple and useful REST API endpoint generator"
+keywords = ["endpoint", "rest", "api"]
+repository = "https://github.com/k-fujino-kohei/restep"
+
+[dependencies]
+syn = { version = "^1", features = ["full"] }
+quote = "^1"
+proc-macro2 = "^1"
+darling = "^0.14"
+
+
+[dev-dependencies]
+anyhow = "^1.0"
+reqwest = { version = "^0.11", features = ["json"] }
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+
+[lib]
+proc-macro = true
+path = "src/lib.rs"
