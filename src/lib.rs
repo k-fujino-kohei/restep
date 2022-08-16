@@ -79,9 +79,7 @@ use syn::{parse_macro_input, AttributeArgs, ItemFn};
 /// Creates a function that returns the specified path.
 ///
 /// # Syntax
-/// ```
-/// #[endpoint("path"[, attributes])]
-/// ```
+/// `#[endpoint("path"[, attributes])]`
 ///
 /// # Attributes
 /// - `path`: endpoint. If an embedded variable is enclosed in braces, the variable must be a field of `params`.
