@@ -17,6 +17,12 @@ macro_rules! unwrap_darling {
 struct EndpointArgs {
     #[darling(default)]
     params: Option<TypePath>,
+    #[darling(default = "default_name")]
+    name: String,
+}
+
+fn default_name() -> String {
+    "endpoint".to_string()
 }
 
 pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream {
@@ -27,11 +33,12 @@ pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream
         .map(|d| syn::Ident::from_string(d).unwrap());
     let path_params2 = path_params.clone();
     let args = unwrap_darling!(EndpointArgs::from_list(&args));
+    let fn_name = syn::Ident::from_string(&args.name).unwrap();
 
     let fn_endpoint = if let Some(params) = args.params {
         let params_ty = params.path.get_ident().unwrap();
         quote! {
-            fn endpoint(params: &#params_ty) -> String {
+            fn #fn_name(params: &#params_ty) -> String {
                 #(
                     let #path_params = &params.#path_params;
                 )*
@@ -40,7 +47,7 @@ pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream
         }
     } else {
         quote! {
-            fn endpoint() -> String {
+            fn #fn_name() -> String {
                 format!(#endpoint)
             }
         }
