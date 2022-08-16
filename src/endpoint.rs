@@ -2,7 +2,7 @@ use darling::FromMeta;
 use proc_macro::TokenStream;
 use quote::quote;
 use std::collections::VecDeque;
-use syn::{AttributeArgs, ItemFn, Stmt, TypePath};
+use syn::{AttributeArgs, ImplItemMethod, Stmt, TypePath};
 
 macro_rules! unwrap_darling {
     ($condition:expr) => {
@@ -25,7 +25,16 @@ fn default_name() -> String {
     "endpoint".to_string()
 }
 
-pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream {
+pub fn parse_attr(args: AttributeArgs, item: BodyItem) -> proc_macro2::TokenStream {
+    embed(quote_fn_endpoint(args), item)
+}
+
+pub enum BodyItem {
+    ItemFn(syn::ItemFn),
+    ItemImpl(syn::ItemImpl),
+}
+
+fn quote_fn_endpoint(args: AttributeArgs) -> proc_macro2::TokenStream {
     let endpoint = unwrap_darling!(parse_endpoint(&args));
     let path_params = unwrap_darling!(extract_path_params(&endpoint));
     let path_params = path_params
@@ -35,7 +44,7 @@ pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream
     let args = unwrap_darling!(EndpointArgs::from_list(&args));
     let fn_name = syn::Ident::from_string(&args.name).unwrap();
 
-    let fn_endpoint = if let Some(params) = args.params {
+    if let Some(params) = args.params {
         let params_ty = params.path.get_ident().unwrap();
         quote! {
             fn #fn_name(params: &#params_ty) -> String {
@@ -51,14 +60,29 @@ pub fn parse_attr(args: AttributeArgs, item: ItemFn) -> proc_macro2::TokenStream
                 format!(#endpoint)
             }
         }
-    };
+    }
+}
 
-    let mut item = item;
-    let fn_endpoint = syn::parse::<Stmt>(fn_endpoint.into()).unwrap();
-    item.block.stmts.insert(0, fn_endpoint);
-
-    quote! {
-        #item
+fn embed(fn_endpoint: proc_macro2::TokenStream, item: BodyItem) -> proc_macro2::TokenStream {
+    match item {
+        BodyItem::ItemFn(mut item) => {
+            // e.g.
+            // fn something() {
+            //     fn endpoint() { ... }
+            // }
+            let fn_endpoint = syn::parse::<Stmt>(fn_endpoint.into()).unwrap();
+            item.block.stmts.insert(0, fn_endpoint);
+            quote!(#item)
+        }
+        BodyItem::ItemImpl(mut item) => {
+            // e.g)
+            // impl Something {
+            //     fn endpoint() { ... }
+            // }
+            let fn_endpoint = syn::parse::<ImplItemMethod>(fn_endpoint.into()).unwrap();
+            item.items.push(syn::ImplItem::Method(fn_endpoint));
+            quote!(#item)
+        }
     }
 }
 

@@ -39,6 +39,23 @@ fn dynamic_route() -> String {
 assert_eq!(dynamic_route(), "/customers/1");
 ```
 
+### impl
+```rust
+use restep::endpoint;
+
+struct APIClient;
+
+// Also You can change the function name.
+#[endpoint("/customers", name = "__endpoint")]
+impl APIClient {
+    pub fn path() -> String {
+        Self::__endpoint()
+    }
+}
+
+assert_eq!(APIClient::path(), "/customers");
+```
+
 ## Examples
 
 ### RealWorld

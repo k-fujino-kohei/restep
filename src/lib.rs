@@ -34,6 +34,23 @@
 //! assert_eq!(dynamic_route(), "/customers/1");
 //! ```
 //!
+//! ## impl
+//! ```
+//! use restep::endpoint;
+//!
+//! struct APIClient;
+//!
+//! // Also You can change the function name.
+//! #[endpoint("/customers", name = "_endpoint")]
+//! impl APIClient {
+//!     pub fn path() -> String {
+//!         Self::_endpoint()
+//!     }
+//! }
+//!
+//! assert_eq!(APIClient::path(), "/customers");
+//! ```
+//!
 //! # Examples
 //!
 //! ## RealWorld
@@ -72,8 +89,9 @@
 mod endpoint;
 
 use crate::endpoint::parse_attr;
+use endpoint::BodyItem;
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, AttributeArgs, ItemFn};
+use syn::{parse_macro_input, AttributeArgs};
 
 ///
 /// Creates a function that returns the specified path.
@@ -88,9 +106,16 @@ use syn::{parse_macro_input, AttributeArgs, ItemFn};
 ///
 #[proc_macro_attribute]
 pub fn endpoint(attr: TokenStream, item: TokenStream) -> TokenStream {
-    parse_attr(
-        parse_macro_input!(attr as AttributeArgs),
-        parse_macro_input!(item as ItemFn),
+    let item = match parse_item(item) {
+        Ok(v) => v,
+        Err(e) => return TokenStream::from(e.to_compile_error()),
+    };
+    parse_attr(parse_macro_input!(attr as AttributeArgs), item).into()
+}
+
+fn parse_item(item: TokenStream) -> syn::Result<BodyItem> {
+    syn::parse::<syn::ItemImpl>(item.clone()).map_or_else(
+        |_e| syn::parse::<syn::ItemFn>(item.clone()).map(BodyItem::ItemFn),
+        |item_impl| Ok(BodyItem::ItemImpl(item_impl)),
     )
-    .into()
 }
