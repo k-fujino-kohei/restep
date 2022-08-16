@@ -75,6 +75,19 @@ use crate::endpoint::parse_attr;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, AttributeArgs, ItemFn};
 
+///
+/// Creates a function that returns the specified path.
+///
+/// # Syntax
+/// ```
+/// #[endpoint("path"[, attributes])]
+/// ```
+///
+/// # Attributes
+/// - `path`: endpoint. If an embedded variable is enclosed in braces, the variable must be a field of `params`.
+/// - `name = "function name"`: Name for auto-generated function. Default is `endpoint`
+/// - `params = "argument type"`: Argument type for auto-generated function.
+///
 #[proc_macro_attribute]
 pub fn endpoint(attr: TokenStream, item: TokenStream) -> TokenStream {
     parse_attr(
