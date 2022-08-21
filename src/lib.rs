@@ -113,9 +113,27 @@ pub fn endpoint(attr: TokenStream, item: TokenStream) -> TokenStream {
     parse_attr(parse_macro_input!(attr as AttributeArgs), item).into()
 }
 
+macro_rules! parses {
+    ($item:expr, $(($synTy:path as $bodyTy:path)),+$(,)*) => {
+        {
+            let mut err;
+            $(
+                let result = syn::parse::<$synTy>($item.clone()).map($bodyTy);
+                match result {
+                    Ok(v) => return Ok(v),
+                    #[allow(unused_assignments)]
+                    Err(e) => err = e,
+                }
+            )*
+            Err(err)
+        }
+    };
+}
+
 fn parse_item(item: TokenStream) -> syn::Result<BodyItem> {
-    syn::parse::<syn::ItemImpl>(item.clone()).map_or_else(
-        |_e| syn::parse::<syn::ItemFn>(item.clone()).map(BodyItem::ItemFn),
-        |item_impl| Ok(BodyItem::ItemImpl(item_impl)),
+    parses!(
+        item,
+        (syn::ItemImpl as BodyItem::ItemImpl),
+        (syn::ItemFn as BodyItem::ItemFn),
     )
 }
